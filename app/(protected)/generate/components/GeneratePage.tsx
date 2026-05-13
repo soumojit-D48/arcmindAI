@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import MermaidDiagram from "./mermaidDiagram";
 import { ArchitectureData } from "../utils/types";
 import MicroservicesSection from "./MicroservicesSection";
@@ -23,7 +24,7 @@ export default function GeneratePage() {
     isLoading,
     error: generateError,
   } = useGenerateSystem(refetch);
-  const [userInput, setUserInput] = useState("");
+  const {register, watch} = useForm();
   const [error, setError] = useState<string | null>(null);
   const [generatedData, setGeneratedData] = useState<ArchitectureData | null>(
     null,
@@ -117,15 +118,44 @@ export default function GeneratePage() {
     }
   };
 
+  {/*prompt is saved inside "userInput" variable, as watch() monitors over the changes in input element*/ }
+  const userInput = watch("prompt", "");
+
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex gap-4 items-center">
-        <Input
-          placeholder="Enter your system architecture prompt..."
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          className="flex-1"
-        />
+      <div className="flex gap-4 items-start">
+
+        {/*Wrapped input element and counter together inside one div element for proper alignment*/}
+        <div className="flex-1">
+          <Input
+            placeholder="Enter your system architecture prompt..."
+            {...register("prompt")}
+            className="flex-1"
+          />
+
+          {/* Counter color darkens after 1500 characters */}
+          <div className="flex justify-end mt-1 mr-3">
+            <p
+              className={`text-sm transition-colors transition-duration-700
+                ${
+                  userInput.length >= 1999
+                    ? "text-red-500 font-bold"
+                    : userInput.length >= 1800
+                    ? "text-orange-500 font-medium"
+                    : userInput.length >= 1500
+                    ? "text-amber-400"
+                    : "text-muted-foreground"
+                }
+              `}
+            >
+              {/* " ! " mark appears as character count goes over 2000 */}
+              {userInput.length !== 0 &&
+                `${userInput.length}/2000${userInput.length > 2000 ? " !" : ""
+                }`}
+            </p>
+          </div>
+        </div>
+
         <Button
           onClick={handleGenerate}
           disabled={isLoading || !userInput.trim()}
