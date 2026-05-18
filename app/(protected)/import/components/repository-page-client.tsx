@@ -93,11 +93,11 @@ export function RepositoryPageClient() {
       generationTriggeredRef.current = true; // Mark as triggered
       const runGeneration = async () => {
         toast.info("Generating system design...");
-        await generateDesign(owner, repo, analysis);
+        await generateDesign(owner, repo, analysis, branch);
       };
       runGeneration();
     }
-  }, [analysis, mermaidDiagram, owner, repo, generateDesign]);
+  }, [analysis, mermaidDiagram, owner, repo, branch, generateDesign]);
 
   // Handle errors
   useEffect(() => {
