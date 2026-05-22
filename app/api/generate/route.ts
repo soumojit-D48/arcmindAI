@@ -111,44 +111,51 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // RATE LIMITING — skip if user has their own API key
-    const userApiKeys = await getUserApiKeys(userId);
+    // RATE LIMITING — skip only if user has their own Gemini API key
+const userApiKeys = await getUserApiKeys(userId);
 
-    const hasOwnApiKey =
-      !!userApiKeys.geminiApiKey ||
-      !!userApiKeys.openaiApiKey;
+const hasOwnApiKey = !!userApiKeys.geminiApiKey;
 
-    if (!hasOwnApiKey) {
-      const rateLimiter =
-        user.plan === "enterprise"
-          ? generationRateLimits.enterprise
-          : user.plan === "pro"
-          ? generationRateLimits.pro
-          : generationRateLimits.free;
+let limit: number | null = null;
+let remaining: number | null = null;
+let reset: number | null = null;
 
-      const { success, reset } =
-        await rateLimiter.limit(userId);
+if (!hasOwnApiKey) {
+  const rateLimiter =
+    user.plan === "enterprise"
+      ? generationRateLimits.enterprise
+      : user.plan === "pro"
+      ? generationRateLimits.pro
+      : generationRateLimits.free;
 
-      if (!success) {
-        apiGatewayErrorsTotal.inc({ status_code: "429" });
+  const result = await rateLimiter.limit(userId);
 
-        httpRequestDurationSeconds.observe(
-          { route },
-          (Date.now() - startTime) / 1000
-        );
+  const { success } = result;
 
-        return NextResponse.json(
-          {
-            error:
-              user.plan === "free"
-                ? "Free users can generate 5 architectures per hour."
-                : "Rate limit exceeded. Please try again later.",
-            retryAfter: new Date(reset).toISOString(),
-          },
-          { status: 429 }
-        );
-      }
-    }
+  limit = result.limit;
+  remaining = result.remaining;
+  reset = result.reset;
+
+  if (!success) {
+    apiGatewayErrorsTotal.inc({ status_code: "429" });
+
+    httpRequestDurationSeconds.observe(
+      { route },
+      (Date.now() - startTime) / 1000
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          user.plan === "free"
+            ? "Free users can generate 5 architectures per hour."
+            : "Rate limit exceeded. Please try again later.",
+        retryAfter: new Date(reset).toISOString(),
+      },
+      { status: 429 }
+    );
+  }
+}
 
     // Keep the rest of your existing AI generation logic BELOW this point
 
@@ -305,6 +312,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
   success: true,
   output: finalAIresponse,
+  limit,
+  remaining,
+  reset,
 });
     } catch (jsonError: unknown) {
       aiGenerationFailureTotal.inc();
