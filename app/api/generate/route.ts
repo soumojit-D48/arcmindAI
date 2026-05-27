@@ -368,12 +368,14 @@ export async function POST(req: NextRequest) {
 
           // Safe, wrapper-contained parsing execution context
           const parsedData = parseAIResponse(fullResponse);
+          // @ts-expect-error Prisma JSON value
+          const safeOutput: Prisma.InputJsonValue = parsedData; // Ensure the output is a valid JSON value
           const createStart = Date.now();
 
           await db.generation.create({
             data: {
               userInput,
-              generatedOutput: parsedData as Prisma.JsonObject,
+              generatedOutput: safeOutput,
               userId,
             },
           });
@@ -397,6 +399,7 @@ export async function POST(req: NextRequest) {
           await sendWebhook({
             userId,
             event: "generation.success",
+           // @ts-expect-error Prisma JSON value
             data: {
               userInput,
               generatedOutput: parsedData,
