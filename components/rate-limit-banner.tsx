@@ -12,30 +12,25 @@ export function RateLimitBanner({
   totalSeconds,
 }: RateLimitBannerProps) {
   const safeSecondsLeft = Number.isFinite(secondsLeft)
-  ? Math.max(0, Math.floor(secondsLeft))
-  : 0;
-  
+    ? Math.max(0, Math.floor(secondsLeft))
+    : 0;
+
   const safeTotalSeconds = Number.isFinite(totalSeconds)
-  ? Math.max(1, Math.floor(totalSeconds))
-  : 1;
-  const clampedSecondsLeft = Math.min(
-  safeSecondsLeft,
-  safeTotalSeconds );
-  
+    ? Math.max(1, Math.floor(totalSeconds))
+    : 1;
+  const clampedSecondsLeft = Math.min(safeSecondsLeft, safeTotalSeconds);
+
   const minutes = Math.floor(clampedSecondsLeft / 60);
   const seconds = clampedSecondsLeft % 60;
   const timeDisplay =
-  minutes > 0
-    ? `${minutes}m ${seconds.toString().padStart(2, "0")}s`
-    : `${seconds}s`;
-  
+    minutes > 0
+      ? `${minutes}m ${seconds.toString().padStart(2, "0")}s`
+      : `${seconds}s`;
+
   const progress = Math.max(
-  0,
-  Math.min(
-    100,
-    (clampedSecondsLeft / safeTotalSeconds) * 100
-  )
-);
+    0,
+    Math.min(100, (clampedSecondsLeft / safeTotalSeconds) * 100),
+  );
 
   return (
     <div
@@ -60,13 +55,13 @@ export function RateLimitBanner({
 
       {/* Ultra-thin, low-profile progress bar aligned to the very bottom */}
       <div
-         className="absolute bottom-0 left-0 h-[2px] w-full bg-neutral-100 dark:bg-neutral-900"
-         role="progressbar"
-         aria-valuemin={0}
-         aria-valuemax={safeTotalSeconds}
-         aria-valuenow={clampedSecondsLeft}
-         aria-label="Rate limit cooldown progress"
-         >
+        className="absolute bottom-0 left-0 h-[2px] w-full bg-neutral-100 dark:bg-neutral-900"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={safeTotalSeconds}
+        aria-valuenow={clampedSecondsLeft}
+        aria-label="Rate limit cooldown progress"
+      >
         <div
           className="h-full bg-amber-500 transition-all duration-1000 ease-linear dark:bg-amber-400"
           style={{ width: `${progress}%` }}
