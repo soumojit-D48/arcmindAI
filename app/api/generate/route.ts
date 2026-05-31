@@ -7,6 +7,7 @@ import { generationRateLimits } from "@/lib/rateLimit";
 import { getUserApiKeys } from "@/lib/api-keys/getUserApiKeys";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { Prisma } from "@prisma/client";
 import {
   aiGenerationRequestsTotal,
   aiGenerationSuccessTotal,
@@ -435,8 +436,8 @@ export async function POST(req: NextRequest) {
           const savedGeneration = await db.generation.create({
             data: {
               userInput,
-              generatedOutput: parsedData,
-              userId,
+              generatedOutput: parsedData as Prisma.InputJsonValue,
+              userId: userId as string,
             },
           });
 
